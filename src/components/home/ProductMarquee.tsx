@@ -12,12 +12,12 @@ interface Props {
 
 const BASE_SPEED      = 0.04;
 const MAX_BOOST       = 2.5;
-const SCROLL_GAIN     = 0.025; // how much each scroll event adds to target boost
-const MAX_DELTA       = 30;    // clamp per-event dy: kills mouse-wheel spikes (~100px), passes touchpad (~5px)
-const TARGET_DECAY    = 0.90;  // target boost decays toward 0 each frame
-const LERP_RATE       = 0.10;  // actual boost lerps toward target (lower = smoother ramp)
-const CARD_HEIGHT     = 220;   // px — all cards share this height, widths vary by aspect ratio
-const REFERENCE_WIDTH = 1200;  // desktop baseline — narrower screens get proportionally slower speed
+const SCROLL_GAIN     = 0.025;
+const MAX_DELTA       = 30;
+const TARGET_DECAY    = 0.90;
+const LERP_RATE       = 0.10;
+const CARD_HEIGHT     = 220;
+const REFERENCE_WIDTH = 1200;
 
 function cardWidth(product: Product): number {
   const img = product.images[0];
@@ -27,15 +27,22 @@ function cardWidth(product: Product): number {
 
 export default function ProductMarquee({ products }: Props) {
   const trackRef     = useRef<HTMLDivElement>(null);
+  const outerRef     = useRef<HTMLDivElement>(null);
   const offsetRef    = useRef(0);
-  const boostRef     = useRef(0);   // actual current boost — lerps toward target
-  const targetRef    = useRef(0);   // desired boost — set by scroll, decays over time
+  const boostRef     = useRef(0);
+  const targetRef    = useRef(0);
   const lastScrollY  = useRef(0);
-  const speedScale   = useRef(1);   // viewport-width ratio — slows marquee on narrow screens
+  const speedScale   = useRef(1);
+  const isDragging   = useRef(false);
+  const dragLastX    = useRef(0);
+  const dragLastTime = useRef(0);
+  const dragVelocity = useRef(0);
+  const didDrag      = useRef(false);
 
   useEffect(() => {
     const track = trackRef.current;
-    if (!track) return;
+    const outer = outerRef.current;
+    if (!track || !outer) return;
 
     const updateScale = () => {
       speedScale.current = Math.min(window.innerWidth / REFERENCE_WIDTH, 1);
@@ -44,10 +51,10 @@ export default function ProductMarquee({ products }: Props) {
     window.addEventListener('resize', updateScale);
 
     const handleScroll = () => {
+      if (isDragging.current) return;
       const dy = window.scrollY - lastScrollY.current;
       lastScrollY.current = window.scrollY;
       const scale = speedScale.current;
-      // Clamp individual delta so mouse-wheel clicks (dy ~100) don't spike more than touchpad swipes
       const clamped = Math.sign(dy) * Math.min(Math.abs(dy), MAX_DELTA);
       const maxBoost = MAX_BOOST * scale;
       targetRef.current = Math.max(-maxBoost, Math.min(targetRef.current + clamped * SCROLL_GAIN * scale, maxBoost));
@@ -61,14 +68,13 @@ export default function ProductMarquee({ products }: Props) {
     const animate = (ts: number) => {
       const delta = Math.min(ts - lastTs, 50);
       lastTs = ts;
-
       const t = delta / 16.67;
-      // Target decays toward 0 (user stops scrolling → speed returns to base)
       targetRef.current *= Math.pow(TARGET_DECAY, t);
-      // Actual boost lerps toward target → smooth acceleration, no sudden jumps
       boostRef.current += (targetRef.current - boostRef.current) * (1 - Math.pow(1 - LERP_RATE, t));
 
-      offsetRef.current += (BASE_SPEED * speedScale.current + boostRef.current) * delta;
+      if (!isDragging.current) {
+        offsetRef.current += (BASE_SPEED * speedScale.current + boostRef.current) * delta;
+      }
       if (offsetRef.current >= half) offsetRef.current -= half;
       if (offsetRef.current < 0) offsetRef.current += half;
 
@@ -76,13 +82,89 @@ export default function ProductMarquee({ products }: Props) {
       rafId = requestAnimationFrame(animate);
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    // ── Shared drag helpers ───────────────────────────────────────────────
+    const startDrag = (x: number) => {
+      isDragging.current = true;
+      didDrag.current = false;
+      dragLastX.current = x;
+      dragLastTime.current = performance.now();
+      dragVelocity.current = 0;
+      targetRef.current = 0;
+      boostRef.current = 0;
+    };
+
+    const moveDrag = (x: number) => {
+      const dx = x - dragLastX.current;
+      const now = performance.now();
+      const dt = now - dragLastTime.current;
+      if (dt > 0) dragVelocity.current = -dx / dt; // positive = forward (left)
+      if (Math.abs(dx) > 2) didDrag.current = true;
+      offsetRef.current -= dx;
+      if (offsetRef.current >= half) offsetRef.current -= half;
+      if (offsetRef.current < 0) offsetRef.current += half;
+      dragLastX.current = x;
+      dragLastTime.current = now;
+    };
+
+    const endDrag = () => {
+      isDragging.current = false;
+      lastScrollY.current = window.scrollY; // prevent stale-delta spike on next scroll
+      const maxBoost = MAX_BOOST * speedScale.current;
+      targetRef.current = Math.max(-maxBoost, Math.min(dragVelocity.current, maxBoost));
+    };
+
+    // ── Touch ─────────────────────────────────────────────────────────────
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) startDrag(e.touches[0].clientX);
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (isDragging.current && e.touches.length === 1) moveDrag(e.touches[0].clientX);
+    };
+    const onTouchEnd = () => endDrag();
+
+    // ── Mouse ─────────────────────────────────────────────────────────────
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      startDrag(e.clientX);
+      outer.style.cursor = 'grabbing';
+
+      const onMouseMove = (e: MouseEvent) => moveDrag(e.clientX);
+      const onMouseUp = () => {
+        endDrag();
+        outer.style.cursor = '';
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    };
+
+    // Block Link navigation after a mouse drag
+    const onClickCapture = (e: MouseEvent) => {
+      if (didDrag.current) {
+        e.preventDefault();
+        e.stopPropagation();
+        didDrag.current = false;
+      }
+    };
+
+    outer.addEventListener('touchstart', onTouchStart, { passive: true });
+    outer.addEventListener('touchmove',  onTouchMove,  { passive: true });
+    outer.addEventListener('touchend',   onTouchEnd);
+    outer.addEventListener('mousedown',  onMouseDown);
+    outer.addEventListener('click',      onClickCapture, { capture: true });
+    window.addEventListener('scroll',    handleScroll, { passive: true });
     rafId = requestAnimationFrame(animate);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', updateScale);
+      window.removeEventListener('scroll',  handleScroll);
+      window.removeEventListener('resize',  updateScale);
       cancelAnimationFrame(rafId);
+      outer.removeEventListener('touchstart', onTouchStart);
+      outer.removeEventListener('touchmove',  onTouchMove);
+      outer.removeEventListener('touchend',   onTouchEnd);
+      outer.removeEventListener('mousedown',  onMouseDown);
+      outer.removeEventListener('click',      onClickCapture, { capture: true });
     };
   }, [products]);
 
@@ -125,12 +207,13 @@ export default function ProductMarquee({ products }: Props) {
                   <Link
                     key={idx}
                     href={`/gallery/${product._id}`}
+                    draggable={false}
                     style={{ width: `min(${w}px, calc(100vw - 6rem))`, height: CARD_HEIGHT, flexShrink: 0 }}
-                    className="group"
+                    className="group transition-[transform,margin] duration-500 hover:scale-[1.12] hover:mx-5 hover:z-10 relative"
                   >
                     <div
                       style={{ width: '100%', height: CARD_HEIGHT }}
-                      className="rounded-lg overflow-hidden bg-stone-100 shadow-sm group-hover:shadow-md transition-shadow"
+                      className="rounded-lg overflow-hidden bg-stone-100 shadow-sm group-hover:shadow-xl transition-shadow duration-500"
                     >
                       <Image
                         src={resolveImageUrl(product.images[0]?.thumbnail ?? 'default.jpg')}

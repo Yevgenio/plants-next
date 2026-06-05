@@ -16,10 +16,17 @@ function getTintStyle(tint: string): React.CSSProperties {
   return {};
 }
 
+function quillToInline(html: string): string {
+  return html
+    .replace(/&nbsp;/g, ' ')
+    .replace(/<\/p>\s*<p>/g, '<br>')
+    .replace(/^<p>|<\/p>$/g, '');
+}
+
 export default function HeroSection({ content }: Props) {
   const [index, setIndex] = useState(0);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const subheadingRef = useRef<HTMLParagraphElement>(null);
+  const subheadingRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,22 +61,26 @@ export default function HeroSection({ content }: Props) {
 
       {/* Content */}
       <div className="relative z-10 text-center px-6 py-20 max-w-3xl">
-        <h1 ref={headingRef} className="font-serif text-5xl md:text-6xl font-light leading-tight mb-5 drop-shadow">
-          {content.title}
-        </h1>
-        <p ref={subheadingRef} className="text-base md:text-lg text-white/85 mb-10 max-w-xl mx-auto leading-relaxed">
-          {content.paragraph}
-        </p>
+        <h1
+          ref={headingRef}
+          className="font-serif text-5xl md:text-6xl font-light leading-tight mb-5 drop-shadow"
+          dangerouslySetInnerHTML={{ __html: quillToInline(content.title) }}
+        />
+        <div
+          ref={subheadingRef}
+          className="text-base md:text-lg text-white/85 mb-10 max-w-xl mx-auto leading-relaxed [&>p]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0"
+          dangerouslySetInnerHTML={{ __html: content.paragraph.replace(/&nbsp;/g, ' ') }}
+        />
         <div ref={buttonRef} className="flex flex-wrap justify-center gap-4">
           <Link
             href="/gallery"
-            className="bg-white text-stone-900 px-8 py-3 text-sm font-medium tracking-wide hover:bg-stone-800 hover:text-white transition-colors"
+            className="bg-white/75 backdrop-blur-sm text-stone-900 px-8 py-3 text-sm font-medium tracking-wide hover:bg-white transition-colors"
           >
             Explore Gallery
           </Link>
           <Link
             href="/events"
-            className="border border-white text-white px-8 py-3 text-sm font-medium tracking-wide hover:bg-white hover:text-stone-900 transition-colors"
+            className="bg-white/10 backdrop-blur-sm border border-white/50 text-white px-8 py-3 text-sm font-medium tracking-wide hover:bg-white/25 transition-colors"
           >
             Upcoming Events
           </Link>

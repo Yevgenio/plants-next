@@ -195,14 +195,14 @@ export default async function GalleryItemPage({ params }: { params: { id: string
         <div className="mt-20 space-y-14 border-t border-stone-100 pt-14">
           {seriesProducts.length > 0 && (
             <RelatedProductsRow
-              title={`More from "${product.series}"`}
+              title={`More from the ${product.series} collection`}
               products={seriesProducts}
               href={`/gallery?series=${encodeURIComponent(product.series!)}`}
             />
           )}
           {categoryProducts.length > 0 && (
             <RelatedProductsRow
-              title={`More ${product.category} works`}
+              title={`More ${product.category} artworks`}
               products={categoryProducts}
               href={`/gallery?category=${encodeURIComponent(product.category!)}`}
             />

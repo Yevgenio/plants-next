@@ -30,7 +30,12 @@ const Signup = () => {
             if (response.ok) {
               router.push("/home");
             } else {
-              setError("Signup failed. Please try again.");
+              let message = 'Signup failed. Please try again.';
+              try {
+                const body = await response.json();
+                message = body.error || body.message || message;
+              } catch {}
+              setError(message);
             }
         } catch (err: unknown) {
           if (err instanceof Error) {

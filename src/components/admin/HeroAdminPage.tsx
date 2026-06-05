@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { HeroContent } from '@/types/HomeContent';
 import { Image } from '@/types/Image';
 import ImageUploadList, { ImageItem } from '@/components/common/ImageUploadList';
+import RichTextEditor from '@/components/common/RichTextEditor';
 import { useRouter } from 'next/navigation';
 import HeroSection from '@/components/home/HeroSection';
 
@@ -138,11 +139,15 @@ export default function HeroAdminPage() {
 
             <div>
               <label className={LABEL}>Title</label>
-              <input type="text" className={INPUT} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+              <p className="text-xs text-stone-400 mt-0.5 mb-2">Supports bold, italic, colour, and other formatting.</p>
+              <div className="[&_.ql-editor]:min-h-[72px]">
+                <RichTextEditor value={form.title} onChange={v => setForm({ ...form, title: v })} />
+              </div>
             </div>
             <div>
               <label className={LABEL}>Paragraph</label>
-              <textarea className={INPUT} rows={3} value={form.paragraph} onChange={e => setForm({ ...form, paragraph: e.target.value })} />
+              <p className="text-xs text-stone-400 mt-0.5 mb-2">Supports bold, italic, colour, and other formatting.</p>
+              <RichTextEditor value={form.paragraph} onChange={v => setForm({ ...form, paragraph: v })} />
             </div>
 
             <div>

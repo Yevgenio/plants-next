@@ -64,7 +64,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       body: JSON.stringify({ email, password }),
       credentials: 'include',
     });
-    if (!res.ok) throw new Error('Login failed');
+    if (!res.ok) {
+      let message = 'Login failed';
+      try {
+        const body = await res.json();
+        message = body.message || body.error || message;
+      } catch {}
+      throw new Error(message);
+    }
     await checkStatus();
   };
 

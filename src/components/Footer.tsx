@@ -40,31 +40,36 @@ export default async function Footer() {
                 <Link href="/home" className="block text-sm text-stone-400 hover:text-white transition-colors">Home</Link>
                 <Link href="/gallery" className="block text-sm text-stone-400 hover:text-white transition-colors">Gallery</Link>
                 <Link href="/events" className="block text-sm text-stone-400 hover:text-white transition-colors">Events</Link>
+                <Link href="/about" className="block text-sm text-stone-400 hover:text-white transition-colors">About</Link>
               </div>
             </div>
 
             {about && (
               <div>
                 <h3 className="text-xs uppercase tracking-widest text-stone-500 mb-4">Contact</h3>
-                <div className="flex gap-4">
+                <div className="flex flex-col gap-3">
                   {about.phone && (
-                    <a href={`tel:${about.phone}`} className="text-stone-400 hover:text-white transition-colors" title="Call">
-                      <CallIcon className="w-5 h-5" />
+                    <a href={`tel:${about.phone}`} className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors text-sm">
+                      <CallIcon className="w-4 h-4 flex-shrink-0" />
+                      {about.phone}
                     </a>
                   )}
                   {about.whatsapp && (
-                    <a href={`https://wa.me/${about.whatsapp}`} target="_blank" rel="noopener noreferrer" className="text-stone-400 hover:text-white transition-colors" title="WhatsApp">
-                      <WhatsappIcon className="w-5 h-5" />
-                    </a>
-                  )}
-                  {about.instagram && (
-                    <a href={about.instagram} target="_blank" rel="noopener noreferrer" className="text-stone-400 hover:text-white transition-colors" title="Instagram">
-                      <InstagramIcon className="w-5 h-5" />
+                    <a href={`https://wa.me/${about.whatsapp}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors text-sm">
+                      <WhatsappIcon className="w-4 h-4 flex-shrink-0" />
+                      WhatsApp
                     </a>
                   )}
                   {about.email && (
-                    <a href={`mailto:${about.email}`} className="text-stone-400 hover:text-white transition-colors" title="Email">
-                      <EmailIcon className="w-5 h-5" />
+                    <a href={`mailto:${about.email}`} className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors text-sm">
+                      <EmailIcon className="w-4 h-4 flex-shrink-0" />
+                      {about.email}
+                    </a>
+                  )}
+                  {about.instagram && (
+                    <a href={about.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-stone-400 hover:text-white transition-colors text-sm">
+                      <InstagramIcon className="w-4 h-4 flex-shrink-0" />
+                      Instagram
                     </a>
                   )}
                 </div>

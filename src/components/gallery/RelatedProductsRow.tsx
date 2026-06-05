@@ -19,10 +19,12 @@ export default function RelatedProductsRow({ title, products, href }: { title: s
   const rowRef = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
+  const didDrag = useRef(false);
 
   useEffect(() => {
     const el = rowRef.current;
     if (!el) return;
+
     const update = () => {
       setCanLeft(el.scrollLeft > 4);
       setCanRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
@@ -30,9 +32,45 @@ export default function RelatedProductsRow({ title, products, href }: { title: s
     update();
     el.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
+
+    // ── Mouse drag ────────────────────────────────────────────────────────
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      const startX = e.clientX;
+      const startScroll = el.scrollLeft;
+      didDrag.current = false;
+      el.style.cursor = 'grabbing';
+
+      const onMouseMove = (e: MouseEvent) => {
+        const dx = e.clientX - startX;
+        if (Math.abs(dx) > 2) didDrag.current = true;
+        el.scrollLeft = startScroll - dx;
+      };
+      const onMouseUp = () => {
+        el.style.cursor = '';
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    };
+
+    const onClickCapture = (e: MouseEvent) => {
+      if (didDrag.current) {
+        e.preventDefault();
+        e.stopPropagation();
+        didDrag.current = false;
+      }
+    };
+
+    el.addEventListener('mousedown', onMouseDown);
+    el.addEventListener('click', onClickCapture, { capture: true });
+
     return () => {
       el.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
+      el.removeEventListener('mousedown', onMouseDown);
+      el.removeEventListener('click', onClickCapture, { capture: true });
     };
   }, [products]);
 
@@ -65,13 +103,13 @@ export default function RelatedProductsRow({ title, products, href }: { title: s
 
         <div
           ref={rowRef}
-          className="flex gap-4 overflow-x-auto pb-1 items-start"
+          className="flex gap-4 overflow-x-auto pb-1 items-start cursor-grab select-none"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', paddingRight: '2.5rem' }}
         >
           {products.map(p => {
             const w = cardWidth(p);
             return (
-              <Link key={p._id} href={`/gallery/${p._id}`} style={{ width: `min(${w}px, 100%)`, flexShrink: 0 }} className="group">
+              <Link key={p._id} href={`/gallery/${p._id}`} draggable={false} style={{ width: `min(${w}px, 100%)`, flexShrink: 0 }} className="group">
                 <div
                   style={{ width: '100%', height: CARD_HEIGHT }}
                   className="rounded-xl overflow-hidden bg-stone-100 shadow-sm group-hover:shadow-lg transition-shadow duration-300 mb-2.5"
@@ -81,6 +119,7 @@ export default function RelatedProductsRow({ title, products, href }: { title: s
                     alt={p.name}
                     width={p.images[0]?.width || 400}
                     height={p.images[0]?.height || 400}
+                    draggable={false}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
                   />
                 </div>
