@@ -64,12 +64,12 @@ export default function HeroSection({ content }: Props) {
         <h1
           ref={headingRef}
           className="font-serif text-5xl md:text-6xl font-light leading-tight mb-5 drop-shadow"
-          dangerouslySetInnerHTML={{ __html: quillToInline(content.title) }}
+          dangerouslySetInnerHTML={{ __html: quillToInline(content.title ?? '') }}
         />
         <div
           ref={subheadingRef}
           className="text-base md:text-lg text-white/85 mb-10 max-w-xl mx-auto leading-relaxed [&>p]:my-1 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0"
-          dangerouslySetInnerHTML={{ __html: content.paragraph.replace(/&nbsp;/g, ' ') }}
+          dangerouslySetInnerHTML={{ __html: (content.paragraph ?? '').replace(/&nbsp;/g, ' ') }}
         />
         <div ref={buttonRef} className="flex flex-wrap justify-center gap-4">
           <Link
