@@ -6,7 +6,7 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "objectstorage.il-jerusalem-1.oraclecloud.com",
-        pathname: "/n/axmemlyrscvh/b/gallery/o/**",
+        pathname: "/n/axftwemw5l5c/b/gallery/o/**",
       },
       {
         protocol: "http",
