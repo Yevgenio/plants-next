@@ -33,16 +33,18 @@ export default async function Page() {
   const contentArtist = artist === 'all' ? 'alexey' : artist;
   const qs = `?artist=${contentArtist}`;
 
-  const [hero, testimonials, about, marqueeSettings, eventsContent, marqueeProducts, eventsResult] =
-    await Promise.all([
-      fetchJson<HeroContent | null>(`${API_URL}/content/home-hero${qs}`, null),
-      fetchJson<TestimonialsContent | null>(`${API_URL}/content/home-testimonials${qs}`, null),
-      fetchJson<AboutContent | null>(`${API_URL}/content/about-boukingolts${qs}`, null),
-      fetchJson<MarqueeContent | null>(`${API_URL}/content/home-product-marquee${qs}`, null),
-      fetchJson<EventsContent | null>(`${API_URL}/content/home-events${qs}`, null),
-      fetchJson<Product[]>(`${API_URL}/products/marquee${qs}`, []),
-      fetchJson<{ data: Event[] }>(`${API_URL}/events/search${qs}`, { data: [] }),
-    ]);
+  const [contentBlocks, marqueeProducts, eventsResult] = await Promise.all([
+    fetchJson<Array<{ name: string; value: unknown }>>(`${API_URL}/content${qs}`, []),
+    fetchJson<Product[]>(`${API_URL}/products/marquee${qs}`, []),
+    fetchJson<{ data: Event[] }>(`${API_URL}/events/search${qs}`, { data: [] }),
+  ]);
+
+  const content = Object.fromEntries(contentBlocks.map(b => [b.name, b.value]));
+  const hero            = (content['home-hero']             ?? null) as HeroContent | null;
+  const testimonials    = (content['home-testimonials']     ?? null) as TestimonialsContent | null;
+  const about           = (content['about-boukingolts']     ?? null) as AboutContent | null;
+  const marqueeSettings = (content['home-product-marquee'] ?? null) as MarqueeContent | null;
+  const eventsContent   = (content['home-events']           ?? null) as EventsContent | null;
 
   const upcomingEvents = (eventsResult.data ?? [])
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
