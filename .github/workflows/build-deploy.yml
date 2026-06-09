@@ -2,15 +2,15 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  IMAGE: ghcr.io/yevgenio/gallery-frontend
-  NODE_VERSION: "20"
+  IMAGE: ghcr.io/yevgenio/plants-frontend
+  NODE_VERSION: "24"
 
 jobs:
   audit:
@@ -50,7 +50,7 @@ jobs:
           " >> $GITHUB_STEP_SUMMARY
 
       - name: Fail on high or critical vulnerabilities
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high --omit=dev
 
   build:
     name: Build Image
@@ -71,6 +71,9 @@ jobs:
           context: .
           push: false
           tags: ${{ env.IMAGE }}:${{ env.SHORT_SHA }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_IMAGE_URL=${{ vars.NEXT_PUBLIC_IMAGE_URL }}
           outputs: type=docker,dest=/tmp/image.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -145,14 +148,13 @@ jobs:
       contents: read
       packages: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Extract short SHA
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      - name: Download image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-image
-          path: /tmp
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -161,47 +163,91 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load and push image
-        run: |
-          docker load < /tmp/image.tar
-          docker push ${{ env.IMAGE }}:${{ env.SHORT_SHA }}
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ env.IMAGE }}:${{ env.SHORT_SHA }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+            NEXT_PUBLIC_IMAGE_URL=${{ vars.NEXT_PUBLIC_IMAGE_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Write push summary
         run: |
           echo "## Image Published" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- \`${{ env.IMAGE }}:${{ env.SHORT_SHA }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ env.IMAGE }}:${{ env.SHORT_SHA }}\` (linux/amd64, linux/arm64)" >> $GITHUB_STEP_SUMMARY
 
-  deploy:
-    name: Deploy to Cluster
+  deploy-staging:
+    name: Deploy to Staging
+    if: github.ref == 'refs/heads/dev'
     needs: push
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Extract short SHA
         run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      - name: Checkout homelab-cluster repo
+      - name: Checkout plants-cluster repo
         uses: actions/checkout@v4
         with:
-          repository: Yevgenio/homelab-cluster
+          repository: Yevgenio/plants-cluster
           token: ${{ secrets.GITOPS_TOKEN }}
 
-      - name: Update image tag in values.yaml
-        run: |
-          sed -i "s/tag: \"[^\"]*\"/tag: \"$SHORT_SHA\"/" manifests/gallery-frontend/values.yaml
+      - name: Update staging image tag
+        run: sed -i "s/tag: \"[^\"]*\"/tag: \"$SHORT_SHA\"/" manifests/frontend-staging/values.yaml
 
       - name: Commit and push
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add manifests/gallery-frontend/values.yaml
-          git commit -m "deploy: gallery-frontend $SHORT_SHA"
+          git add manifests/frontend-staging/values.yaml
+          git commit -m "deploy: plants-frontend $SHORT_SHA to staging"
           git push
 
       - name: Write deploy summary
         run: |
-          echo "## Deployment Triggered" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployed to Staging" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "ArgoCD will detect the tag change and roll out \`${{ env.IMAGE }}:$SHORT_SHA\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Image: \`${{ env.IMAGE }}:$SHORT_SHA\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Host: staging.${{ vars.FRONTEND_HOST }}" >> $GITHUB_STEP_SUMMARY
+
+  promote-prod:
+    name: Promote to Production
+    if: github.ref == 'refs/heads/main'
+    needs: push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Extract short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Checkout plants-cluster repo
+        uses: actions/checkout@v4
+        with:
+          repository: Yevgenio/plants-cluster
+          token: ${{ secrets.GITOPS_TOKEN }}
+
+      - name: Promote tag to production
+        run: sed -i "s/tag: \"[^\"]*\"/tag: \"$SHORT_SHA\"/" manifests/frontend/values.yaml
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add manifests/frontend/values.yaml
+          git commit -m "deploy: plants-frontend $SHORT_SHA to prod"
+          git push
+
+      - name: Write promote summary
+        run: |
+          echo "## Deployed to Production" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Pipeline:** audit → build → scan → push → deploy" >> $GITHUB_STEP_SUMMARY
+          echo "- Image: \`${{ env.IMAGE }}:$SHORT_SHA\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Host: ${{ vars.FRONTEND_HOST }}" >> $GITHUB_STEP_SUMMARY
