@@ -125,7 +125,7 @@ jobs:
         run: |
           echo "## Security Scan (Trivy)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Severity filter: HIGH, CRITICAL — unfixed CVEs ignored" >> $GITHUB_STEP_SUMMARY
+          echo "Severity filter: HIGH, CRITICAL -- unfixed CVEs ignored" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat trivy-report.txt >> $GITHUB_STEP_SUMMARY
