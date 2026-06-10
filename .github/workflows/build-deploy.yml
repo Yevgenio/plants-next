@@ -68,8 +68,8 @@ jobs:
           push: false
           tags: ${{ env.IMAGE }}:${{ env.SHORT_SHA }}
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_IMAGE_URL=${{ vars.NEXT_PUBLIC_IMAGE_URL }}
+            NEXT_PUBLIC_API_URL=https://api.boukingolts.dev
+            NEXT_PUBLIC_IMAGE_URL=https://images.boukingolts.dev
           outputs: type=docker,dest=/tmp/image.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -167,8 +167,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ env.IMAGE }}:${{ env.SHORT_SHA }}
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_IMAGE_URL=${{ vars.NEXT_PUBLIC_IMAGE_URL }}
+            NEXT_PUBLIC_API_URL=https://api.boukingolts.dev
+            NEXT_PUBLIC_IMAGE_URL=https://images.boukingolts.dev
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -211,7 +211,7 @@ jobs:
           echo "## Deployed to Staging" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Image: \`${{ env.IMAGE }}:$SHORT_SHA\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Host: staging.${{ vars.FRONTEND_HOST }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Host: staging.boukingolts.dev" >> $GITHUB_STEP_SUMMARY
 
   promote-prod:
     name: Promote to Production
@@ -246,4 +246,4 @@ jobs:
           echo "## Deployed to Production" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- Image: \`${{ env.IMAGE }}:$SHORT_SHA\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Host: ${{ vars.FRONTEND_HOST }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Host: boukingolts.dev" >> $GITHUB_STEP_SUMMARY
