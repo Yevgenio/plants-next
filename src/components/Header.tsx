@@ -77,7 +77,7 @@ function NavDropdown({
       <Link
         href={href}
         className={`flex items-center gap-0.5 text-sm tracking-wide transition-colors ${
-          active ? 'text-stone-900 font-medium border-b-2 border-stone-900 pb-0.5' : 'text-stone-500 hover:text-stone-900'
+          active ? 'text-stone-900 font-medium underline decoration-stone-400 decoration-2 underline-offset-4' : 'text-stone-500 hover:text-stone-900'
         }`}
       >
         {label}
@@ -261,7 +261,7 @@ export default function Header() {
           <Link
             href="/home"
             className={`text-sm tracking-wide transition-colors ${
-              pathname.startsWith('/home') ? 'text-stone-900 font-medium border-b-2 border-stone-900 pb-0.5' : 'text-stone-500 hover:text-stone-900'
+              pathname.startsWith('/home') ? 'text-stone-900 font-medium underline decoration-stone-400 decoration-2 underline-offset-4' : 'text-stone-500 hover:text-stone-900'
             }`}
           >
             Home
@@ -271,7 +271,7 @@ export default function Header() {
           <Link
             href="/about"
             className={`text-sm tracking-wide transition-colors ${
-              pathname.startsWith('/about') ? 'text-stone-900 font-medium border-b-2 border-stone-900 pb-0.5' : 'text-stone-500 hover:text-stone-900'
+              pathname.startsWith('/about') ? 'text-stone-900 font-medium underline decoration-stone-400 decoration-2 underline-offset-4' : 'text-stone-500 hover:text-stone-900'
             }`}
           >
             About
