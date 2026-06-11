@@ -77,7 +77,7 @@ function NavDropdown({
       <Link
         href={href}
         className={`flex items-center gap-0.5 text-sm tracking-wide transition-colors ${
-          active ? 'text-stone-900 font-medium' : 'text-stone-500 hover:text-stone-900'
+          active ? 'text-stone-900 font-medium underline decoration-stone-400 decoration-2 underline-offset-4' : 'text-stone-500 hover:text-stone-900'
         }`}
       >
         {label}
@@ -261,7 +261,7 @@ export default function Header() {
           <Link
             href="/home"
             className={`text-sm tracking-wide transition-colors ${
-              pathname.startsWith('/home') ? 'text-stone-900 font-medium' : 'text-stone-500 hover:text-stone-900'
+              pathname.startsWith('/home') ? 'text-stone-900 font-medium underline decoration-stone-400 decoration-2 underline-offset-4' : 'text-stone-500 hover:text-stone-900'
             }`}
           >
             Home
@@ -271,7 +271,7 @@ export default function Header() {
           <Link
             href="/about"
             className={`text-sm tracking-wide transition-colors ${
-              pathname.startsWith('/about') ? 'text-stone-900 font-medium' : 'text-stone-500 hover:text-stone-900'
+              pathname.startsWith('/about') ? 'text-stone-900 font-medium underline decoration-stone-400 decoration-2 underline-offset-4' : 'text-stone-500 hover:text-stone-900'
             }`}
           >
             About
@@ -346,14 +346,14 @@ export default function Header() {
               </div>
             )}
 
-            <Link href="/home" className={`block py-3 text-sm border-b border-stone-50 transition-colors ${pathname.startsWith('/home') ? 'text-stone-900 font-medium' : 'text-stone-600'}`}>
+            <Link href="/home" className={`block py-3 text-sm border-b border-stone-50 transition-colors ${pathname.startsWith('/home') ? 'text-stone-900 font-semibold pl-3 border-l-2 border-stone-900' : 'text-stone-600'}`}>
               Home
             </Link>
 
             {/* Gallery accordion */}
             <div>
               <div className="flex items-center justify-between py-3 border-b border-stone-50">
-                <Link href="/gallery" className={`text-sm ${pathname.startsWith('/gallery') ? 'text-stone-900 font-medium' : 'text-stone-600'}`}>Gallery</Link>
+                <Link href="/gallery" className={`text-sm transition-colors ${pathname.startsWith('/gallery') ? 'text-stone-900 font-semibold pl-3 border-l-2 border-stone-900' : 'text-stone-600'}`}>Gallery</Link>
                 {galleryCategories.length > 0 && (
                   <button onClick={() => setMobileExpanded(v => v === 'gallery' ? null : 'gallery')} className="p-1 text-stone-400" aria-label="Expand gallery categories">
                     <FiChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileExpanded === 'gallery' ? 'rotate-180' : ''}`} />
@@ -372,7 +372,7 @@ export default function Header() {
             {/* Events accordion */}
             <div>
               <div className="flex items-center justify-between py-3 border-b border-stone-50">
-                <Link href="/events" className={`text-sm ${pathname.startsWith('/events') ? 'text-stone-900 font-medium' : 'text-stone-600'}`}>Events</Link>
+                <Link href="/events" className={`text-sm transition-colors ${pathname.startsWith('/events') ? 'text-stone-900 font-semibold pl-3 border-l-2 border-stone-900' : 'text-stone-600'}`}>Events</Link>
                 {eventCategories.length > 0 && (
                   <button onClick={() => setMobileExpanded(v => v === 'events' ? null : 'events')} className="p-1 text-stone-400" aria-label="Expand event categories">
                     <FiChevronDown className={`w-4 h-4 transition-transform duration-200 ${mobileExpanded === 'events' ? 'rotate-180' : ''}`} />
@@ -388,7 +388,7 @@ export default function Header() {
               )}
             </div>
 
-            <Link href="/about" className={`block py-3 text-sm border-b border-stone-50 transition-colors ${pathname.startsWith('/about') ? 'text-stone-900 font-medium' : 'text-stone-600'}`}>
+            <Link href="/about" className={`block py-3 text-sm border-b border-stone-50 transition-colors ${pathname.startsWith('/about') ? 'text-stone-900 font-semibold pl-3 border-l-2 border-stone-900' : 'text-stone-600'}`}>
               About
             </Link>
 
